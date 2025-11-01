@@ -1,0 +1,174 @@
+services:
+  production-system-dashboard:
+    image: "mcr.microsoft.com/dotnet/nightly/aspire-dashboard:latest"
+    expose:
+      - "18888"
+      - "18889"
+    networks:
+      - "aspire"
+    restart: "always"
+  postgres:
+    image: "docker.io/postgres:16"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    expose:
+      - "5432"
+    volumes:
+      - type: "volume"
+        target: "/var/lib/postgresql/data"
+        source: "pgdata"
+        read_only: false
+    networks:
+      - "aspire"
+  product-migrator:
+    image: "${PRODUCT_MIGRATOR_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ConnectionStrings__productdb: "Host=postgres;Port=5432;Username=postgres;Password=${POSTGRES_PASSWORD};Database=productdb"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://production-system-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "product-migrator"
+    networks:
+      - "aspire"
+  user-migrator:
+    image: "${USER_MIGRATOR_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ConnectionStrings__userdb: "Host=postgres;Port=5432;Username=postgres;Password=${POSTGRES_PASSWORD};Database=userdb"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://production-system-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "user-migrator"
+    networks:
+      - "aspire"
+  address-migrator:
+    image: "${ADDRESS_MIGRATOR_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ConnectionStrings__addressdb: "Host=postgres;Port=5432;Username=postgres;Password=${POSTGRES_PASSWORD};Database=addressdb"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://production-system-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "address-migrator"
+    networks:
+      - "aspire"
+  order-migrator:
+    image: "${ORDER_MIGRATOR_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ConnectionStrings__orderdb: "Host=postgres;Port=5432;Username=postgres;Password=${POSTGRES_PASSWORD};Database=orderdb"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://production-system-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "order-migrator"
+    networks:
+      - "aspire"
+  product-grpcservice:
+    image: "${PRODUCT_GRPCSERVICE_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "${PRODUCT_GRPCSERVICE_PORT}"
+      ConnectionStrings__productdb: "Host=postgres;Port=5432;Username=postgres;Password=${POSTGRES_PASSWORD};Database=productdb"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://production-system-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "product-grpcservice"
+    expose:
+      - "${PRODUCT_GRPCSERVICE_PORT}"
+    depends_on:
+      product-migrator:
+        condition: "service_completed_successfully"
+    networks:
+      - "aspire"
+  user-grpcservice:
+    image: "${USER_GRPCSERVICE_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "${USER_GRPCSERVICE_PORT}"
+      ConnectionStrings__userdb: "Host=postgres;Port=5432;Username=postgres;Password=${POSTGRES_PASSWORD};Database=userdb"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://production-system-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "user-grpcservice"
+    expose:
+      - "${USER_GRPCSERVICE_PORT}"
+    depends_on:
+      user-migrator:
+        condition: "service_completed_successfully"
+    networks:
+      - "aspire"
+  address-grpcservice:
+    image: "${ADDRESS_GRPCSERVICE_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "${ADDRESS_GRPCSERVICE_PORT}"
+      ConnectionStrings__addressdb: "Host=postgres;Port=5432;Username=postgres;Password=${POSTGRES_PASSWORD};Database=addressdb"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://production-system-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "address-grpcservice"
+    expose:
+      - "${ADDRESS_GRPCSERVICE_PORT}"
+    depends_on:
+      address-migrator:
+        condition: "service_completed_successfully"
+    networks:
+      - "aspire"
+  order-grpcservice:
+    image: "${ORDER_GRPCSERVICE_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "${ORDER_GRPCSERVICE_PORT}"
+      ConnectionStrings__orderdb: "Host=postgres;Port=5432;Username=postgres;Password=${POSTGRES_PASSWORD};Database=orderdb"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://production-system-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "order-grpcservice"
+    expose:
+      - "${ORDER_GRPCSERVICE_PORT}"
+    depends_on:
+      order-migrator:
+        condition: "service_completed_successfully"
+    networks:
+      - "aspire"
+  apigateway-api:
+    image: "${APIGATEWAY_API_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "${APIGATEWAY_API_PORT}"
+      services__product-grpcservice__http__0: "http://product-grpcservice:${PRODUCT_GRPCSERVICE_PORT}"
+      services__user-grpcservice__http__0: "http://user-grpcservice:${USER_GRPCSERVICE_PORT}"
+      services__address-grpcservice__http__0: "http://address-grpcservice:${ADDRESS_GRPCSERVICE_PORT}"
+      services__order-grpcservice__http__0: "http://order-grpcservice:${ORDER_GRPCSERVICE_PORT}"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://production-system-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "apigateway-api"
+    expose:
+      - "${APIGATEWAY_API_PORT}"
+    networks:
+      - "aspire"
+networks:
+  aspire:
+    driver: "bridge"
+volumes:
+  pgdata:
+    driver: "local"

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.2"/>
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsAspireHost>true</IsAspireHost>
+        <UserSecretsId>76ddc4d0-9285-432e-bd1b-f01a9d099677</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Aspire.Hosting.AppHost" Version="9.5.2"/>
+        <PackageReference Include="Aspire.Hosting.Docker" Version="9.5.2-preview.1.25378.10"/>
+        <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="9.5.2" />
+        <PackageReference Include="Aspire.Npgsql" Version="9.5.2" />
+        <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.5.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\src\Address\Address.DataMigrator\Address.DataMigrator.csproj" />
+      <ProjectReference Include="..\src\Address\Address.GrpcService\Address.GrpcService.csproj" />
+      <ProjectReference Include="..\src\ApiGateway\ApiGateway.Api\ApiGateway.Api.csproj" />
+      <ProjectReference Include="..\src\Order\Order.DataMigrator\Order.DataMigrator.csproj" />
+      <ProjectReference Include="..\src\Order\Order.GrpcService\Order.GrpcService.csproj" />
+      <ProjectReference Include="..\src\Product\Product.DataMigrator\Product.DataMigrator.csproj" />
+      <ProjectReference Include="..\src\Product\Product.GrpcService\Product.GrpcService.csproj" />
+      <ProjectReference Include="..\src\User\User.DataMigrator\User.DataMigrator.csproj" />
+      <ProjectReference Include="..\src\User\User.GrpcService\User.GrpcService.csproj" />
+    </ItemGroup>
+
+</Project>

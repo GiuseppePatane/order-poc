@@ -1,0 +1,200 @@
+syntax = "proto3";
+
+import "common.proto";
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "Products";
+
+package products;
+
+// The product service definition.
+service ProductService {
+  // Retrieves a product by its ID
+  rpc GetProduct (GetProductRequest) returns (ProductResponse);
+
+  // Retrieves a paginated list of products
+  rpc GetProducts (GetProductsRequest) returns (GetProductsResponse);
+
+  // Creates a new product
+  rpc CreateProduct (CreateProductRequest) returns (ProductResponse);
+
+  // Updates an existing product
+  rpc UpdateProduct (UpdateProductRequest) returns (ProductResponse);
+
+  // Deletes a product by its ID
+  rpc DeleteProduct (DeleteProductRequest) returns (DeleteProductResponse);
+  
+  // Checks product availability for a given quantity ad lock the stock
+  rpc LockProductStock (UpdateStockRequest) returns (UpdateStockResponse);
+  
+  // Releases previously locked product stock
+  rpc ReleaseProductStock (UpdateStockRequest) returns (UpdateStockResponse);
+
+  // Retrieves a paginated list of categories
+  rpc GetCategories (GetCategoriesRequest) returns (GetCategoriesResponse);
+
+}
+
+// ========== Get Product by ID ==========
+
+// The request message containing the product ID.
+message GetProductRequest {
+  string product_id = 1;
+}
+
+// The response message containing the product details or an error.
+message ProductResponse {
+  oneof result {
+    ProductData data = 1;
+    shared.ErrorResponse error = 2;
+  }
+}
+
+// ========== Get Products (Paginated) ==========
+
+// Request for paginated product list
+message GetProductsRequest {
+  int32 page_number = 1;  // Page number (starts from 1)
+  int32 page_size = 2;    // Number of items per page
+  optional string category_id = 3;  // Optional filter by category
+  optional bool is_active = 4;      // Optional filter by active status
+  optional string search_term = 5;  // Optional search in name/description
+}
+
+// Response containing paginated products
+message GetProductsResponse {
+  oneof result {
+    ProductListData data = 1;
+    shared.ErrorResponse error = 2;
+  }
+}
+
+// Paginated product list data
+message ProductListData {
+  repeated ProductData items = 1;
+  int32 page_number = 2;
+  int32 page_size = 3;
+  int32 total_count = 4;
+  int32 total_pages = 5;
+}
+
+// ========== Create Product ==========
+
+// Request to create a new product
+message CreateProductRequest {
+  string name = 1;
+  string description = 2;
+  double price = 3;
+  int32 stock = 4;
+  string sku = 5;
+  string category_id = 6;
+}
+
+// ========== Update Product ==========
+
+// Request to update a product
+message UpdateProductRequest {
+  string product_id = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional double price = 4;
+  int32 stock = 5;
+  optional string sku = 6;
+  optional string category_id = 7;
+}
+
+// ========== Delete Product ==========
+
+// Request to delete a product
+message DeleteProductRequest {
+  string product_id = 1;
+}
+
+// Response for delete operation
+message DeleteProductResponse {
+  oneof result {
+    DeleteProductData data = 1;
+    shared.ErrorResponse error = 2;
+  }
+}
+
+// Delete confirmation data
+message DeleteProductData {
+  bool success = 1;
+  string product_id = 2;
+}
+
+// ========== Update Stock ==========
+
+// Request to update stock (lock or release)
+message UpdateStockRequest {
+  string product_id = 1;
+  int32 quantity = 2;
+}
+
+// Response for stock update
+message UpdateStockResponse {
+  oneof result {
+    StockUpdateData data = 1;
+    shared.ErrorResponse error = 2;
+  }
+}
+
+// Stock update data
+message StockUpdateData {
+  string product_id = 1;
+  int32 updated_stock = 2;
+  double locked_price = 3;
+}
+
+// ========== Product Data Model ==========
+
+// Product data
+message ProductData {
+  string product_id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  int32 stock = 5;
+  string sku = 6;
+  string category_id = 7;
+  bool is_active = 8;
+  google.protobuf.Timestamp created_at = 9;
+  optional google.protobuf.Timestamp updated_at = 10;
+}
+
+// ========== Get Categories (Paginated) ==========
+
+// Request for paginated category list
+message GetCategoriesRequest {
+  int32 page_number = 1;  // Page number (starts from 1)
+  int32 page_size = 2;    // Number of items per page
+  optional bool is_active = 3;  // Optional filter by active status
+}
+
+// Response containing paginated categories
+message GetCategoriesResponse {
+  oneof result {
+    CategoryListData data = 1;
+    shared.ErrorResponse error = 2;
+  }
+}
+
+// Paginated category list data
+message CategoryListData {
+  repeated CategoryData items = 1;
+  int32 page_number = 2;
+  int32 page_size = 3;
+  int32 total_count = 4;
+  int32 total_pages = 5;
+}
+
+// Category data
+message CategoryData {
+  string category_id = 1;
+  string name = 2;
+  string description = 3;
+  bool is_active = 4;
+  google.protobuf.Timestamp created_at = 5;
+  optional google.protobuf.Timestamp updated_at = 6;
+}

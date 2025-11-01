@@ -1,0 +1,48 @@
+@baseUrl = http://localhost:5046
+@userId = {{userId}}
+
+###  Create Address
+POST {{baseUrl}}/api/addresses
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "street": "Via Etnea 45 prima traversa",
+  "city": "Milo",
+  "state": "CT",
+  "postalCode": "95100",
+  "country": "IT",
+  "label": "Casa",
+  "isDefault": false
+}
+
+> {% client.global.set("addressId", response.body.addressId); %}
+### Saved addressId = {{addressId}}
+
+### Get Address by ID
+GET {{baseUrl}}/api/addresses/{{addressId}}
+
+###  Get Default Address for User
+GET {{baseUrl}}/api/addresses/user/{{userId}}/default
+
+###  Get All Addresses by User
+GET {{baseUrl}}/api/addresses/user/{{userId}}
+
+###  Get Paged Addresses by User
+GET {{baseUrl}}/api/addresses/user/{{userId}}/paged/1/10
+
+### Update Address
+PUT {{baseUrl}}/api/addresses/{{addressId}}
+Content-Type: application/json
+
+{
+  "street": "Via Roma 123",
+  "city": "Zafferana Etnea",
+  "state": "CT",
+  "postalCode": "95019",
+  "country": "IT",
+  "label": "Casa Updated"
+}
+
+### Set Address as Default
+PATCH {{baseUrl}}/api/addresses/{{addressId}}/set-default

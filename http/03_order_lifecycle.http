@@ -1,0 +1,105 @@
+@baseUrl = http://localhost:5046
+@userId = {{userId}}
+@addressId = {{addressId}}
+
+@userId = {{userId}}
+@addressId = {{addressId}}
+
+### Get first available product (paged)
+GET {{baseUrl}}/api/products/1/10
+Accept: application/json
+
+> {%
+    let data = {};
+    try { 
+        data = typeof response.body === 'string' ? JSON.parse(response.body) : response.body; 
+    }
+    catch(e) { 
+        console.error("JSON parse failed", e); 
+    }
+
+    const items = data.items;
+    if (items && items.length > 0) {
+        client.global.set("productId", items[0].productId);
+        console.log("Saved productId =", items[0].productId);
+    } else {
+        console.warn("Strano sulla mia macchina funzionava cit.");
+    }
+%}
+
+### Saved productId = {{productId}}
+
+@productId = {{productId}}
+
+### Create Order
+POST {{baseUrl}}/api/orders
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "shippingAddressId": "{{addressId}}",
+  "billingAddressId": "{{addressId}}",
+  "firstItem": 
+    {
+      "productId": "{{productId}}",
+      "quantity": 10
+    }
+}
+
+
+> {% client.global.set("orderId", response.body.orderId); %}
+### Saved orderId = {{orderId}}
+
+###  Get Order Details
+GET {{baseUrl}}/api/orders/{{orderId}}
+
+
+
+### Add Item to Order 
+### productid  da prendere manualmente dal get products
+POST {{baseUrl}}/api/orders/{{orderId}}/items
+Content-Type: application/json
+
+{
+  "productId": "c705bf02-913f-43cb-b93e-4d4465adcfc6",
+  "quantity": 3
+}
+
+> {% client.global.set("itemId", response.body.itemId); %}
+### Saved itemId = {{itemId}}
+
+
+### Update Item Quantity
+PATCH {{baseUrl}}/api/orders/{{orderId}}/items/{{itemId}}/quantity
+Content-Type: application/json
+
+{
+  "newQuantity": -10
+}
+
+###  Remove Item from Order
+DELETE {{baseUrl}}/api/orders/{{orderId}}/items/{{itemId}}
+
+###  Update Order Status
+PATCH {{baseUrl}}/api/orders/{{orderId}}/status
+Content-Type: application/json
+
+{
+  "status": "Confirmed"
+}
+
+### Cancel Order
+DELETE {{baseUrl}}/api/orders/{{orderId}}/cancel
+Content-Type: application/json
+
+{
+  "reason": "Customer request"
+}
+
+###  Get Order Details
+GET {{baseUrl}}/api/orders/{{orderId}}
+
+###  Get User Orders
+GET {{baseUrl}}/api/orders/user/{{userId}}
+
+

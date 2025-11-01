@@ -1,0 +1,39 @@
+@baseUrl = http://localhost:5046
+### Create User
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "firstName": "Guido",
+  "lastName": "Lavespa",
+  "email": "g.lavespa+{{$timestamp}}@example.com"
+
+}
+
+> {% client.global.set("userId", response.body.userId); %}
+###  Saved userId = {{userId}}
+
+###  Get User by ID
+GET {{baseUrl}}/api/users/{{userId}}
+
+###  Get Users (Paginated)
+GET {{baseUrl}}/api/users/1/10
+Accept: application/json
+
+###  Get Users with Search
+GET {{baseUrl}}/api/users/1/10?searchTerm=Guido
+Accept: application/json
+
+###  Update User
+PUT {{baseUrl}}/api/users/{{userId}}
+Content-Type: application/json
+
+{
+  "firstName": "Guido",
+  "lastName": "Lavespa Updated"
+
+}
+
+
+###  Delete User
+DELETE {{baseUrl}}/api/users/{{userId}}

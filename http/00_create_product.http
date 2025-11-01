@@ -1,0 +1,74 @@
+@baseUrl = http://localhost:5046
+
+### Get Active Categories Only
+GET {{baseUrl}}/api/products/categories/1/10?isActive=true
+Accept: application/json
+
+> {%
+    let data = {};
+    try {
+        data = typeof response.body === 'string' ? JSON.parse(response.body) : response.body;
+    }
+    catch(e) {
+        console.error("JSON parse failed", e);
+    }
+
+    const items = data.items;
+    if (items && items.length > 0) {
+        client.global.set("categoryId", items[0].categoryId);
+        console.log("Saved categoryId =", items[0].categoryId);
+    } else {
+        console.warn("Strano sulla mia macchina funzionava cit.");
+    }
+%}
+
+@categoryId = {{categoryId}}
+###  Create Product
+POST {{baseUrl}}/api/products
+Content-Type: application/json
+
+{
+  "name": "Iphone 19",
+  "description": "The best iphone ever made.",
+  "categoryId": "{{categoryId}}",
+  "price": 79.90,
+  "stock": 100,
+  "sku": "IPH{{$timestamp}}"
+}
+
+> {% client.global.set("productId", response.body.productId); %}
+###  Saved productId = {{productId}}
+
+###  Get Product by ID
+GET {{baseUrl}}/api/products/{{productId}}
+
+### Get Products (Paginated)
+GET {{baseUrl}}/api/products/1/10
+Accept: application/json
+
+###  Get Products (Paginated with filters)
+GET {{baseUrl}}/api/products/1/10?isActive=true&searchTerm=phone
+Accept: application/json
+
+###  Update Product
+PUT {{baseUrl}}/api/products/{{productId}}
+Content-Type: application/json
+
+{
+  "name": "Iphone 19 Pro Max",
+  "description": "The best iphone ever made - Updated edition",
+   "categoryId": "{{categoryId}}",
+  "price": 89.90,
+  "stock": 150
+}
+
+### Delete Product
+DELETE {{baseUrl}}/api/products/{{productId}}
+
+### Get Categories (Paginated)
+GET {{baseUrl}}/api/products/categories/1/10
+Accept: application/json
+
+### Get Active Categories Only
+GET {{baseUrl}}/api/products/categories/1/10?isActive=true
+Accept: application/json
