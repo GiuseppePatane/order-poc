@@ -87,7 +87,12 @@ public class AddressGrpcService : AddressService.AddressServiceBase
             var addresses = await _addressRepository.GetByUserIdAsync(userId, context.CancellationToken);
 
             var response = new AddressListData();
-            response.Items.AddRange(addresses.Select(MapToAddressData));
+            foreach (var address in addresses)
+            {
+                var addressData = MapToAddressData(address);
+                response.Items.Add(addressData);
+            }
+            
 
             return new GetAddressesResponse
             {

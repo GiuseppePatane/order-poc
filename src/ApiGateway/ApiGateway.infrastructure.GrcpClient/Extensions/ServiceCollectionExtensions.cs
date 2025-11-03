@@ -54,7 +54,7 @@ public static class ServiceCollectionExtensions
             .AddStandardResilienceHandler();
 
         services.AddScoped<IUserServiceClient, UserServiceGrpcClient>();
-        services.AddScoped<IUserOrchestratorService, UserOchestratorService>();
+        services.AddScoped<IUserOrchestratorService, UserOrchestratorService>();
         return services;
     }
 

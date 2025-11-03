@@ -95,8 +95,12 @@ public class OrderGrpcService : OrderService.OrderServiceBase
             var orders = await _orderRepository.GetByUserIdAsync(userId, context.CancellationToken);
 
             var response = new OrderListData();
-            response.Items.AddRange(orders.Select(MapToOrderData));
-
+            foreach (var order in orders)
+            {
+                var orderData = MapToOrderData(order);
+                response.Items.Add(orderData);
+            }
+            
             return new GetOrdersResponse
             {
                 Data = response

@@ -8,14 +8,14 @@ using Microsoft.Extensions.Logging;
 
 namespace ApiGateway.infrastructure.GrcpClient.User;
 
-public class UserOchestratorService : IUserOrchestratorService
+public class UserOrchestratorService : IUserOrchestratorService
 {
     private readonly IUserServiceClient _userServiceClient;
     private readonly IAddressServiceClient _addressServiceClient;
     private readonly IOrderServiceClient _orderServiceClient;
-    private readonly ILogger<UserOchestratorService> _logger;
+    private readonly ILogger<UserOrchestratorService> _logger;
 
-    public UserOchestratorService(IUserServiceClient userServiceClient, IAddressServiceClient addressServiceClient, IOrderServiceClient orderServiceClient, ILogger<UserOchestratorService> logger)
+    public UserOrchestratorService(IUserServiceClient userServiceClient, IAddressServiceClient addressServiceClient, IOrderServiceClient orderServiceClient, ILogger<UserOrchestratorService> logger)
     {
         _userServiceClient = userServiceClient;
         _addressServiceClient = addressServiceClient;
@@ -27,7 +27,7 @@ public class UserOchestratorService : IUserOrchestratorService
     {
 
             _logger.LogDebug("Validating existence of user {UserId}", userId);
-            var userResult = await _userServiceClient.GetUserById(userId, cancellationToken);
+            var userResult = await _userServiceClient.DeleteUser(userId);
 
             if (!userResult.IsSuccess || userResult.Data == null)
             {
@@ -41,9 +41,11 @@ public class UserOchestratorService : IUserOrchestratorService
                     }
                 );
             }
-            
-            DeleteAddresses(userId,cancellationToken).Forget(_logger); // Fire and forget address deletion 
-            DeleteOrders(userId,cancellationToken).Forget(_logger); // Fire and forget order deletion
+
+            await Task.WhenAll(
+                DeleteAddresses(userId, cancellationToken),
+                DeleteOrders(userId, cancellationToken)
+            );
             
     
             _logger.LogDebug("Deleting addresses for user {UserId}", userId);
@@ -64,7 +66,7 @@ public class UserOchestratorService : IUserOrchestratorService
             return ServiceResult<UserMutationResultDto>.Failure(addressResult.Error!);
         }
         
-        if(addressResult.Data != null && addressResult.Data.Any())
+        if(addressResult.Data == null || !addressResult.Data.Any())
         {
             _logger.LogDebug("No addresses to deleted found for user {UserId}", userId);
             return ServiceResult<UserMutationResultDto>.Success(
@@ -99,7 +101,7 @@ public class UserOchestratorService : IUserOrchestratorService
             return ServiceResult<UserMutationResultDto>.Failure(ordersResult.Error!);
         }
         
-        if(ordersResult.Data != null && ordersResult.Data.Any())
+        if(ordersResult.Data == null || !ordersResult.Data.Any())
         {
             _logger.LogDebug("No orders to deleted found for user {UserId}", userId);
             return ServiceResult<UserMutationResultDto>.Success(
